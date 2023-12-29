@@ -5,11 +5,13 @@ from django.contrib.auth.models import User
 from .validators import real_time
 from django.utils.timezone import now
 
+
 class ProfileEditForm(UserChangeForm):
 
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email',)
+
 
 class CreatePostForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -25,9 +27,9 @@ class CreatePostForm(forms.ModelForm):
             attrs={'type': 'datetime-local', 'class': 'datetime-input', },
             format='%Y-%m-%dT%H:%M'), }
 
+
 class CommentsForm(forms.ModelForm):
-    
+
     class Meta:
         model = Comments
-        fields = ('text',) 
-
+        fields = ('text',)

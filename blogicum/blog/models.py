@@ -4,6 +4,7 @@ from .validators import real_time
 
 User = get_user_model()
 
+
 class PublishedModel(models.Model):
     is_published = models.BooleanField(
         'Опубликовано',
@@ -71,13 +72,13 @@ class Post(PublishedModel):
     )
     image = models.ImageField('Фото', upload_to='post_images', blank=True)
 
-
     class Meta:
         verbose_name = "публикация"
         verbose_name_plural = "Публикации"
 
     def __str__(self):
         return self.title
+
 
 class Comments(models.Model):
     text = models.TextField('Текст комментария', blank=True)
@@ -88,5 +89,6 @@ class Comments(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+
     class Meta:
         ordering = ('created_at',)

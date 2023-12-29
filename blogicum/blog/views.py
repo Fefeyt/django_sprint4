@@ -18,6 +18,7 @@ def filter_queryset(queryset):
                            is_published=True,
                            category__is_published=True)
 
+
 @login_required
 def add_comment(request, comment_id):
     post = get_object_or_404(Post, pk=comment_id)
@@ -29,6 +30,7 @@ def add_comment(request, comment_id):
         comment.save()
     return redirect('..')
 
+
 class IndexView(ListView):
     model = Post
     queryset = filter_queryset(
@@ -36,6 +38,7 @@ class IndexView(ListView):
     paginate_by = 10
     template_name = 'blog/index.html'
     ordering = '-pub_date'
+
 
 def post_detail(request, post_id):
     template = 'blog/detail.html'
@@ -54,8 +57,7 @@ def post_detail(request, post_id):
     context = {
         'post': post,
         'form': form,
-        'comments': comments,
-        }
+        'comments': comments, }
     return render(request, template, context)
 
 
@@ -99,15 +101,17 @@ class ProfileView(ListView):
         context['profile'] = user
         return context
 
+
 @login_required
 def edit_profile(request, username):
     instance = get_object_or_404(User, username=username)
     form = ProfileEditForm(request.POST or None, instance=instance)
-    context = {'form' : form,}  
+    context = {'form': form, }
     if form.is_valid():
         form.save()
         return redirect('..')
     return render(request, 'blog/user.html', context)
+
 
 class CreatePostView(LoginRequiredMixin, CreateView):
     model = Post
@@ -122,15 +126,18 @@ class CreatePostView(LoginRequiredMixin, CreateView):
         return reverse('blog:profile',
                        kwargs={'username': self.request.user.username})
 
+
 def delete_post(request, post_id):
     instance = get_object_or_404(Post, pk=post_id)
     form = CreatePostForm(instance=instance)
     context = {'form': form}
     if request.method == 'POST':
         instance.delete()
-        profile_url = reverse('blog:profile', kwargs={'username': request.user})
+        profile_url = reverse('blog:profile',
+                              kwargs={'username': request.user})
         return redirect(profile_url)
     return render(request, 'blog/create.html', context)
+
 
 class CommentsMixin(LoginRequiredMixin):
     model = Comments
@@ -155,6 +162,7 @@ class CommentsMixin(LoginRequiredMixin):
         context["comment"] = get_object_or_404(
             Comments, id=self.kwargs['comment_id'])
         return context
+
 
 class CommentsUpdateView(CommentsMixin, UpdateView):
     pass
