@@ -1,14 +1,22 @@
 from django.db import models
-from core.models import PublishedModel
 from django.contrib.auth import get_user_model
 from .validators import real_time
 
 User = get_user_model()
 
+class PublishedModel(models.Model):
+    is_published = models.BooleanField(
+        'Опубликовано',
+        default=True,
+        help_text='Снимите галочку, чтобы скрыть публикацию.')
+    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
 
 class Location(PublishedModel):
-    name = models.CharField(max_length=256,
-                            verbose_name="Название места")
+    name = models.CharField(max_length=256, verbose_name="Название места")
 
     class Meta:
         verbose_name = "местоположение"
@@ -58,7 +66,8 @@ class Post(PublishedModel):
     )
     category = models.ForeignKey(
         Category, verbose_name="Категория",
-        on_delete=models.SET_NULL, null=True
+        on_delete=models.SET_NULL, null=True,
+        related_name='post'
     )
     image = models.ImageField('Фото', upload_to='post_images', blank=True)
 
@@ -67,6 +76,8 @@ class Post(PublishedModel):
         verbose_name = "публикация"
         verbose_name_plural = "Публикации"
 
+    def __str__(self):
+        return self.title
 
 class Comments(models.Model):
     text = models.TextField('Текст комментария', blank=True)

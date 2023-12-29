@@ -24,7 +24,9 @@
       <a class="btn btn-sm text-muted" href="{% url 'blog:edit_comment' post.id comment.id %}" role="button">
         Отредактировать комментарий
       </a>
-
+      <a class="btn btn-sm text-muted" href="{% url 'blog:delete_comment' post.id comment.id %}" role="button">
+        Удалить комментарий
+      </a>
     {% endif %}
   </div>
 {% endfor %}
