@@ -2,7 +2,6 @@ from django import forms
 from .models import Post, Comments
 from django.contrib.auth.forms import UserChangeForm
 from django.contrib.auth.models import User
-from .validators import real_time
 from django.utils.timezone import now
 
 
@@ -22,7 +21,6 @@ class CreatePostForm(forms.ModelForm):
     class Meta:
         model = Post
         exclude = ('author',)
-        validators = [real_time]
         widgets = {'pub_date': forms.DateTimeInput(
             attrs={'type': 'datetime-local', 'class': 'datetime-input', },
             format='%Y-%m-%dT%H:%M'), }

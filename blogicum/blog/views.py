@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import Http404
-from datetime import datetime
 from django.utils import timezone
 from .models import Post, Category, Comments
 from django.contrib.auth.decorators import login_required
@@ -9,7 +8,9 @@ from .forms import ProfileEditForm, CreatePostForm, CommentsForm
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import (UpdateView, DeleteView, ListView, CreateView)
+from django.views.generic import (UpdateView, DeleteView,
+                                  ListView, CreateView,
+                                  DetailView, )
 from django.db.models import Count
 
 
@@ -40,25 +41,25 @@ class IndexView(ListView):
     ordering = '-pub_date'
 
 
-def post_detail(request, post_id):
-    template = 'blog/detail.html'
-    post = get_object_or_404(
-        Post.objects.filter(
-            is_published=True,
-            category__is_published=True,
-            pub_date__lte=datetime.now(),
-            pk=post_id
-        )
-    )
-    form = CommentsForm()
-    comments = Comments.objects.filter(
-        post_id=post_id
-    ).order_by('created_at')
-    context = {
-        'post': post,
-        'form': form,
-        'comments': comments, }
-    return render(request, template, context)
+class PostDetailView(DetailView):
+    model = Post
+    template_name = 'blog/detail.html'
+    pk_url_kwarg = 'post_id'
+
+    def dispatch(self, request, *args, **kwargs):
+        post = get_object_or_404(Post, pk=kwargs['post_id'])
+        if not post.is_published and post.author != request.user:
+            raise Http404
+        else:
+            return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = CommentsForm()
+        comments = self.object.comments.select_related('author')
+        context['comments'] = comments
+        context['comment_count'] = comments.count()
+        return context
 
 
 class CategoryPostsView(ListView):
@@ -127,16 +128,41 @@ class CreatePostView(LoginRequiredMixin, CreateView):
                        kwargs={'username': self.request.user.username})
 
 
-def delete_post(request, post_id):
-    instance = get_object_or_404(Post, pk=post_id)
-    form = CreatePostForm(instance=instance)
-    context = {'form': form}
-    if request.method == 'POST':
-        instance.delete()
-        profile_url = reverse('blog:profile',
-                              kwargs={'username': request.user})
-        return redirect(profile_url)
-    return render(request, 'blog/create.html', context)
+class PostMixin(LoginRequiredMixin):
+    model = Post
+    template_name = 'blog/create.html'
+    pk_url_kwarg = 'post_id'
+
+    def dispatch(self, request, *args, **kwargs):
+        instance = get_object_or_404(Post, pk=kwargs['post_id'])
+        if instance.author != request.user:
+            return redirect('blog:post_detail', post_id=kwargs['post_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+
+class EditPostView(PostMixin, UpdateView):
+    form_class = CreatePostForm
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        post_id = self.object.id
+        return reverse('blog:post_detail', kwargs={'post_id': post_id})
+
+
+class DeletePostView(PostMixin, DeleteView):
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        instance = self.get_object()
+        context['form'] = CreatePostForm(instance=instance)
+        return context
+
+    def get_success_url(self):
+        return reverse('blog:profile',
+                       kwargs={'username': self.request.user.username})
 
 
 class CommentsMixin(LoginRequiredMixin):

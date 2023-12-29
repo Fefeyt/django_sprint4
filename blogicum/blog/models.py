@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from .validators import real_time
 
 User = get_user_model()
 
@@ -53,7 +52,6 @@ class Post(PublishedModel):
         verbose_name="Дата и время публикации",
         help_text="Если установить дату и время в будущем — "
         "можно делать отложенные публикации.",
-        validators=(real_time,),
     )
     author = models.ForeignKey(
         User, verbose_name="Автор публикации", on_delete=models.CASCADE
